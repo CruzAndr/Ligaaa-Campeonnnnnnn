@@ -4,6 +4,7 @@
  */
 package cinema;
 
+import frames.Jframe2;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -177,56 +178,40 @@ public class Cinema extends JFrame {
     }
 
     private void showMovieDetails(JsonObject movie) {
-        JDialog dialog = new JDialog(this, "Detalles de la Película", true);
-        dialog.setSize(400, 400);
+    // Llamada a la API para obtener detalles adicionales de la película
+    try {
+        int movieId = movie.get("id").getAsInt();
+        URL movieDetailsURL = new URL("https://api.themoviedb.org/3/movie/"
+                + movieId + "?api_key=" + API_KEY + "&language=es-ES&append_to_response=credits");
+        HttpURLConnection detailsConnection = (HttpURLConnection)
+                movieDetailsURL.openConnection();
+        detailsConnection.setRequestMethod("GET");
 
-        // Llamada a la API para obtener detalles adicionales de la película
-        try {
-            int movieId = movie.get("id").getAsInt();
-            URL movieDetailsURL = new URL("https://api.themoviedb.org/3/movie/" + movieId + "?api_key=" + API_KEY + "&language=es-ES&append_to_response=credits");
-            HttpURLConnection detailsConnection = (HttpURLConnection) movieDetailsURL.openConnection();
-            detailsConnection.setRequestMethod("GET");
-
-            StringBuilder detailsResponse;
-            try (BufferedReader detailsReader = new BufferedReader(new InputStreamReader(detailsConnection.getInputStream()))) {
-                detailsResponse = new StringBuilder();
-                String detailsLine;
-                while ((detailsLine = detailsReader.readLine()) != null) {
-                    detailsResponse.append(detailsLine);
-                }
+        StringBuilder detailsResponse;
+        try (BufferedReader detailsReader = new BufferedReader(new
+                InputStreamReader(detailsConnection.getInputStream()))) {
+            detailsResponse = new StringBuilder();
+            String detailsLine;
+            while ((detailsLine = detailsReader.readLine()) != null) {
+                detailsResponse.append(detailsLine);
             }
-
-            JsonObject movieDetails = JsonParser.parseString(detailsResponse.toString()).getAsJsonObject();
-            String title = movieDetails.get("title").getAsString();
-            String overview = movieDetails.get("overview").getAsString();
-            JsonArray cast = movieDetails.getAsJsonObject("credits").getAsJsonArray("cast");
-            double voteAverage = movieDetails.get("vote_average").getAsDouble();
-            JsonArray genres = movieDetails.getAsJsonArray("genres");
-            String director = getDirector(movieDetails.getAsJsonObject("credits").getAsJsonArray("crew"));
-
-            // Crear etiquetas para mostrar la información detallada
-            JLabel titleLabel = new JLabel("Título: " + title);
-            JLabel overviewLabel = new JLabel("Sinopsis: " + overview);
-            JLabel voteLabel = new JLabel("Rating: " + voteAverage);
-            JLabel genresLabel = new JLabel("Géneros: " + getGenres(genres));
-            JLabel directorLabel = new JLabel("Director: " + director);
-
-            // Crear panel para la información detallada
-            JPanel detailsPanel = new JPanel();
-            detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
-            detailsPanel.add(titleLabel);
-            detailsPanel.add(overviewLabel);
-            detailsPanel.add(voteLabel);
-            detailsPanel.add(genresLabel);
-            detailsPanel.add(directorLabel);
-
-            dialog.add(detailsPanel);
-            dialog.setVisible(true);
-
-        } catch (IOException e) {
-            e.printStackTrace();
         }
+
+        JsonObject movieDetails = JsonParser.parseString(detailsResponse.
+                toString()).getAsJsonObject();
+
+        // Crear tu JFrame2 y mostrarlo
+        SwingUtilities.invokeLater(() -> {
+            JFrame2 frame2 = new JFrame2(movieDetails);
+            frame2.setSize(400, 400);
+            frame2.setVisible(true);
+        });
+
+    } catch (IOException e) {
+        e.printStackTrace();
     }
+}
+
 
     private String getGenres(JsonArray genres) {
         StringBuilder genresText = new StringBuilder();
