@@ -4,7 +4,6 @@
  */
 package cinema;
 
-import frames.Jframe2;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -18,17 +17,19 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
+import cinema.Jframe.*;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+
 import javax.imageio.ImageIO;
 
 public class Cinema extends JFrame {
 
     private static final String API_KEY = "f846867b6184611eeff179631d3f9e26";
     private List<JsonObject> movies;
+    private Jframe jframe;
 
     public Cinema() {
         setTitle("Movies from TMDb");
@@ -177,19 +178,18 @@ public class Cinema extends JFrame {
         contentPane.add(Box.createRigidArea(new Dimension(0, 10))); // Espaciado vertical
     }
 
-    private void showMovieDetails(JsonObject movie) {
+  private void showMovieDetails(JsonObject movie) {
+    jframe = new Jframe();
     // Llamada a la API para obtener detalles adicionales de la película
     try {
         int movieId = movie.get("id").getAsInt();
         URL movieDetailsURL = new URL("https://api.themoviedb.org/3/movie/"
                 + movieId + "?api_key=" + API_KEY + "&language=es-ES&append_to_response=credits");
-        HttpURLConnection detailsConnection = (HttpURLConnection)
-                movieDetailsURL.openConnection();
+        HttpURLConnection detailsConnection = (HttpURLConnection) movieDetailsURL.openConnection();
         detailsConnection.setRequestMethod("GET");
 
         StringBuilder detailsResponse;
-        try (BufferedReader detailsReader = new BufferedReader(new
-                InputStreamReader(detailsConnection.getInputStream()))) {
+        try (BufferedReader detailsReader = new BufferedReader(new InputStreamReader(detailsConnection.getInputStream()))) {
             detailsResponse = new StringBuilder();
             String detailsLine;
             while ((detailsLine = detailsReader.readLine()) != null) {
@@ -197,20 +197,24 @@ public class Cinema extends JFrame {
             }
         }
 
-        JsonObject movieDetails = JsonParser.parseString(detailsResponse.
-                toString()).getAsJsonObject();
+        JsonObject movieDetails = JsonParser.parseString(detailsResponse.toString()).getAsJsonObject();
 
-        // Crear tu JFrame2 y mostrarlo
+        // Muestra la información en tu Jframe existente
         SwingUtilities.invokeLater(() -> {
-            JFrame2 frame2 = new JFrame2(movieDetails);
-            frame2.setSize(400, 400);
-            frame2.setVisible(true);
+            // Utiliza el método updateMovieDetails para actualizar la interfaz gráfica
+            jframe.updateMovieDetails(movieDetails);
+
+            // Hacer visible el JFrame
+            jframe.setVisible(true);
         });
 
     } catch (IOException e) {
         e.printStackTrace();
     }
 }
+
+
+
 
 
     private String getGenres(JsonArray genres) {
@@ -239,7 +243,7 @@ public class Cinema extends JFrame {
         try {
             URL url = new URL("https://image.tmdb.org/t/p/w500" + imageUrl);
             return ImageIO.read(url);
-        } catch(IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
             return null;
         }
